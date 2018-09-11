@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-const CfgFileName = ".gxrc"
+const CfgFileName = ".dms3-gxrc"
 
 type Config struct {
 	Repos      map[string]string `json:"repos,omitempty"`
@@ -46,7 +46,7 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	// first check $HOME/.gxrc
+	// first check $HOME/.dms3-gxrc
 	cfg, err := loadFile(filepath.Join(home, CfgFileName))
 	if err != nil {
 		if !os.IsNotExist(err) {

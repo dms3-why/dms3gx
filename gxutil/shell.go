@@ -6,18 +6,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	sh "github.com/ipfs/go-ipfs-api"
+	sh "github.com/dms3-fs/go-fs-api"
 	homedir "github.com/mitchellh/go-homedir"
-	ma "github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr-net"
+	ma "github.com/dms3-mft/go-multiaddr"
+	manet "github.com/dms3-mft/go-multiaddr-net"
 	log "github.com/whyrusleeping/stump"
 )
 
 var UsingGateway bool
 
 func NewShell() *sh.Shell {
-	if apivar := os.Getenv("IPFS_API"); apivar != "" {
-		log.VLog("using '%s' from IPFS_API env as api endpoint.", apivar)
+	if apivar := os.Getenv("DMS3FS_API"); apivar != "" {
+		log.VLog("using '%s' from DMS3FS_API env as api endpoint.", apivar)
 		return sh.NewShell(apivar)
 	}
 
@@ -28,19 +28,19 @@ func NewShell() *sh.Shell {
 
 	UsingGateway = true
 
-	log.VLog("using global ipfs gateways as api endpoint")
-	return sh.NewShell("https://ipfs.io")
+	log.VLog("using global dms3fs gateways as api endpoint")
+	return sh.NewShell("https://dms3.io")
 }
 
 func getLocalAPIShell() (*sh.Shell, error) {
-	ipath := os.Getenv("IPFS_PATH")
+	ipath := os.Getenv("DMS3FS_PATH")
 	if ipath == "" {
 		home, err := homedir.Dir()
 		if err != nil {
 			return nil, err
 		}
 
-		ipath = filepath.Join(home, ".ipfs")
+		ipath = filepath.Join(home, ".dms3-fs")
 	}
 
 	apifile := filepath.Join(ipath, "api")

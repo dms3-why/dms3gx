@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	gx "github.com/whyrusleeping/gx/gxutil"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 )
 
 func DiffPackages(a, b string) (*Diff, error) {
-	dir, err := ioutil.TempDir("", "gx-diff")
+	dir, err := ioutil.TempDir("", "dms3-gx-diff")
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ type Diff struct {
 	dir string
 }
 
-func PkgFileDiff(dir string, a, b *gx.Package) (*Diff, error) {
+func PkgFileDiff(dir string, a, b *dms3gx.Package) (*Diff, error) {
 	out := Diff{
 		Version: []string{a.Version, b.Version},
 		Name:    a.Name,
@@ -54,7 +54,7 @@ func PkgFileDiff(dir string, a, b *gx.Package) (*Diff, error) {
 		dir:     dir,
 	}
 
-	current := make(map[string]*gx.Dependency)
+	current := make(map[string]*dms3gx.Dependency)
 
 	for _, dep := range a.Dependencies {
 		current[dep.Name] = dep
@@ -78,7 +78,7 @@ func PkgFileDiff(dir string, a, b *gx.Package) (*Diff, error) {
 				Name:    dep.Name,
 			}
 			out.Imports[dep.Name] = ndep
-			tdir, err := ioutil.TempDir("", "gx-diff")
+			tdir, err := ioutil.TempDir("", "dms3-gx-diff")
 			if err != nil {
 				return nil, err
 			}

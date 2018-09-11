@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	gx "github.com/whyrusleeping/gx/gxutil"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 
 	"github.com/blang/semver"
 )
@@ -14,14 +14,14 @@ type pkgImport struct {
 	version semver.Version
 }
 
-func check(pkg *gx.Package) (bool, error) {
+func check(pkg *dms3gx.Package) (bool, error) {
 	var failed bool
 	// name -> hash -> path+version
 	packages := make(map[string]map[string]*pkgImport)
 
-	var traverse func(*gx.Package) error
-	traverse = func(pkg *gx.Package) error {
-		return pkg.ForEachDep(func(dep *gx.Dependency, dpkg *gx.Package) error {
+	var traverse func(*dms3gx.Package) error
+	traverse = func(pkg *dms3gx.Package) error {
+		return pkg.ForEachDep(func(dep *dms3gx.Dependency, dpkg *dms3gx.Package) error {
 			pkgVersions, ok := packages[dpkg.Name]
 			if !ok {
 				pkgVersions = make(map[string]*pkgImport, 1)
@@ -102,7 +102,7 @@ func check(pkg *gx.Package) (bool, error) {
 	}
 
 	// Finally, check names and versions.
-	if err := pkg.ForEachDep(func(dep *gx.Dependency, dpkg *gx.Package) error {
+	if err := pkg.ForEachDep(func(dep *dms3gx.Dependency, dpkg *dms3gx.Package) error {
 		if dep.Name != dpkg.Name {
 			failed = true
 			fmt.Printf(

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	gx "github.com/whyrusleeping/gx/gxutil"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 	. "github.com/whyrusleeping/stump"
 )
 
@@ -55,20 +55,20 @@ func jsonPrint(i interface{}) {
 }
 
 type depTreeNode struct {
-	this     *gx.Dependency
+	this     *dms3gx.Dependency
 	children []*depTreeNode
 }
 
-func genDepsTree(pm *gx.PM, pkg *gx.Package) (*depTreeNode, error) {
+func genDepsTree(pm *dms3gx.PM, pkg *dms3gx.Package) (*depTreeNode, error) {
 
 	complete := make(map[string]*depTreeNode)
 
-	var rec func(pkg *gx.Package) (*depTreeNode, error)
-	rec = func(pkg *gx.Package) (*depTreeNode, error) {
+	var rec func(pkg *dms3gx.Package) (*depTreeNode, error)
+	rec = func(pkg *dms3gx.Package) (*depTreeNode, error) {
 		cur := new(depTreeNode)
-		cur.this = new(gx.Dependency)
+		cur.this = new(dms3gx.Dependency)
 
-		err := pkg.ForEachDep(func(dep *gx.Dependency, dpkg *gx.Package) error {
+		err := pkg.ForEachDep(func(dep *dms3gx.Dependency, dpkg *dms3gx.Package) error {
 			sub := complete[dep.Hash]
 			if sub == nil {
 				var err error
@@ -134,7 +134,7 @@ func (dtn *depTreeNode) printFiltered(filter string, quiet, collapse bool) {
 		if printed[p.this.Hash] && collapse {
 			toprint = []*depTreeNode{
 				{
-					this: &gx.Dependency{
+					this: &dms3gx.Dependency{
 						Name: "...",
 					},
 				},

@@ -15,7 +15,7 @@ import (
 
 	"github.com/blang/semver"
 	cli "github.com/urfave/cli"
-	gx "github.com/whyrusleeping/gx/gxutil"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 	filter "github.com/whyrusleeping/json-filter"
 	progmeter "github.com/whyrusleeping/progmeter"
 	log "github.com/whyrusleeping/stump"
@@ -23,14 +23,14 @@ import (
 
 var (
 	cwd string
-	pm  *gx.PM
+	pm  *dms3gx.PM
 )
 
-const PkgFileName = gx.PkgFileName
+const PkgFileName = dms3gx.PkgFileName
 
-func LoadPackageFile(path string) (*gx.Package, error) {
+func LoadPackageFile(path string) (*dms3gx.Package, error) {
 	if path == PkgFileName {
-		root, err := gx.GetPackageRoot()
+		root, err := dms3gx.GetPackageRoot()
 		if err != nil {
 			return nil, err
 		}
@@ -38,23 +38,23 @@ func LoadPackageFile(path string) (*gx.Package, error) {
 		path = filepath.Join(root, PkgFileName)
 	}
 
-	var pkg gx.Package
-	err := gx.LoadPackageFile(&pkg, path)
+	var pkg dms3gx.Package
+	err := dms3gx.LoadPackageFile(&pkg, path)
 	if err != nil {
 		return nil, err
 	}
 
-	if pkg.GxVersion == "" {
-		pkg.GxVersion = gx.GxVersion
+	if pkg.Dms3GxVersion == "" {
+		pkg.Dms3GxVersion = dms3gx.Dms3GxVersion
 	}
 
 	if pkg.SubtoolRequired {
-		found, err := gx.IsSubtoolInstalled(pkg.Language)
+		found, err := dms3gx.IsSubtoolInstalled(pkg.Language)
 		if err != nil {
 			return nil, err
 		}
 		if !found {
-			return nil, fmt.Errorf("package requires a subtool (gx-%s) and none was found", pkg.Language)
+			return nil, fmt.Errorf("package requires a subtool (dms3gx-%s) and none was found", pkg.Language)
 		}
 	}
 
@@ -70,19 +70,19 @@ func LoadPackageFile(path string) (*gx.Package, error) {
 }
 
 func main() {
-	cfg, err := gx.LoadConfig()
+	cfg, err := dms3gx.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pm, err = gx.NewPM(cfg)
+	pm, err = dms3gx.NewPM(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	app := cli.NewApp()
-	app.Author = "whyrusleeping"
-	app.Version = gx.GxVersion
+	app.Author = "yozgatsi"
+	app.Version = dms3gx.Dms3GxVersion
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose",
@@ -101,7 +101,7 @@ func main() {
 		return nil
 	}
 
-	app.Usage = "gx is a packaging tool that uses ipfs"
+	app.Usage = "dms3gx is a packaging tool that uses dms3fs"
 
 	app.Commands = []cli.Command{
 		CleanCommand,
@@ -127,7 +127,7 @@ func main() {
 }
 
 func checkLastPubVer() string {
-	out, err := ioutil.ReadFile(filepath.Join(cwd, ".gx", "lastpubver"))
+	out, err := ioutil.ReadFile(filepath.Join(cwd, ".dms3-gx", "lastpubver"))
 	if err != nil {
 		return ""
 	}
@@ -139,10 +139,10 @@ func checkLastPubVer() string {
 var PublishCommand = cli.Command{
 	Name:  "publish",
 	Usage: "publish a package",
-	Description: `publish a package into ipfs using a locally running daemon.
+	Description: `publish a package into dms3fs using a locally running daemon.
 
 'publish' bundles up all files associated with the package (respecting
-.gitignore and .gxignore files), adds them to ipfs, and writes out the
+.gitignore and .dms3-gxignore files), adds them to dms3fs, and writes out the
 resulting package hash.
 
 By default, you cannot publish a package without updating the version
@@ -156,9 +156,9 @@ number. This is a soft requirement and can be skipped by specifying the
 		},
 	},
 	Action: func(c *cli.Context) error {
-		if gx.UsingGateway {
-			log.Log("gx cannot publish using public gateways.")
-			log.Log("please run an ipfs node and try again.")
+		if dms3gx.UsingGateway {
+			log.Log("dms3gx cannot publish using public gateways.")
+			log.Log("please run an dms3fs node and try again.")
 			return nil
 		}
 
@@ -177,12 +177,12 @@ number. This is a soft requirement and can be skipped by specifying the
 	},
 }
 
-func doPublish(pkg *gx.Package) error {
+func doPublish(pkg *dms3gx.Package) error {
 	if !pm.ShellOnline() {
-		return fmt.Errorf("ipfs daemon isn't running")
+		return fmt.Errorf("dms3fs daemon isn't running")
 	}
 
-	err := gx.TryRunHook("pre-publish", pkg.Language, pkg.SubtoolRequired)
+	err := dms3gx.TryRunHook("pre-publish", pkg.Language, pkg.SubtoolRequired)
 	if err != nil {
 		return err
 	}
@@ -199,24 +199,24 @@ func doPublish(pkg *gx.Package) error {
 		return err
 	}
 
-	err = gx.TryRunHook("post-publish", pkg.Language, pkg.SubtoolRequired, hash)
+	err = dms3gx.TryRunHook("post-publish", pkg.Language, pkg.SubtoolRequired, hash)
 	return err
 }
 
 func writeLastPub(vers string, hash string) error {
-	err := os.MkdirAll(".gx", 0755)
+	err := os.MkdirAll(".dms3-gx", 0755)
 	if err != nil {
 		return err
 	}
 
-	fi, err := os.Create(".gx/lastpubver")
+	fi, err := os.Create(".dms3-gx/lastpubver")
 	if err != nil {
 		return fmt.Errorf("failed to create version file: %s", err)
 	}
 
 	defer fi.Close()
 
-	log.VLog("writing published version to .gx/lastpubver")
+	log.VLog("writing published version to .dms3-gx/lastpubver")
 	_, err = fmt.Fprintf(fi, "%s: %s\n", vers, hash)
 	if err != nil {
 		return fmt.Errorf("failed to write version file: %s", err)
@@ -231,10 +231,10 @@ var ImportCommand = cli.Command{
 	Description: `Download packages and add them as a dependency in package.json.
 
 EXAMPLE
-  > gx import QmUAQaWbKxGCUTuoQVvvicbQNZ9APF5pDGWyAZSe93AtKH
-  > gx import github.com/libp2p/go-libp2p
+  > dms3gx import QmUAQaWbKxGCUTuoQVvvicbQNZ9APF5pDGWyAZSe93AtKH
+  > dms3gx import github.com/dms3-p2p/go-p2p
 
-    In the last example, Gx will check the ".gx/lastpubver"
+    In the last example, Dms3Gx will check the ".dms3-gx/lastpubver"
     file in the repository to find which hash to import.
 `,
 	Flags: []cli.Flag{
@@ -275,7 +275,7 @@ EXAMPLE
 			return err
 		}
 
-		ipath, err := gx.InstallPath(pkg.Language, "", global)
+		ipath, err := dms3gx.InstallPath(pkg.Language, "", global)
 		if err != nil {
 			return err
 		}
@@ -295,7 +295,7 @@ EXAMPLE
 			log.Log("continuing, please note some things may not work as expected")
 		}
 
-		ndep := &gx.Dependency{
+		ndep := &dms3gx.Dependency{
 			Author:  npkg.Author,
 			Hash:    dephash,
 			Name:    npkg.Name,
@@ -303,12 +303,12 @@ EXAMPLE
 		}
 
 		pkg.Dependencies = append(pkg.Dependencies, ndep)
-		err = gx.SavePackageFile(pkg, PkgFileName)
+		err = dms3gx.SavePackageFile(pkg, PkgFileName)
 		if err != nil {
 			return fmt.Errorf("writing pkgfile: %s", err)
 		}
 
-		err = gx.TryRunHook("post-import", npkg.Language, npkg.SubtoolRequired, dephash)
+		err = dms3gx.TryRunHook("post-import", npkg.Language, npkg.SubtoolRequired, dephash)
 		if err != nil {
 			return fmt.Errorf("running post-import: %s", err)
 		}
@@ -362,12 +362,12 @@ var InstallCommand = cli.Command{
 				return err
 			}
 
-			err = gx.TryRunHook("req-check", pkg.Language, pkg.SubtoolRequired, cwd)
+			err = dms3gx.TryRunHook("req-check", pkg.Language, pkg.SubtoolRequired, cwd)
 			if err != nil {
 				return err
 			}
 
-			ipath, err := gx.InstallPath(pkg.Language, cwd, global)
+			ipath, err := dms3gx.InstallPath(pkg.Language, cwd, global)
 			if err != nil {
 				return err
 			}
@@ -379,7 +379,7 @@ var InstallCommand = cli.Command{
 			return nil
 		}
 
-		ipath, err := gx.InstallPath(pkg.Language, "", global)
+		ipath, err := dms3gx.InstallPath(pkg.Language, "", global)
 		if err != nil {
 			return err
 		}
@@ -405,7 +405,7 @@ var InstallCommand = cli.Command{
 		}
 
 		if save {
-			err := gx.SavePackageFile(pkg, PkgFileName)
+			err := dms3gx.SavePackageFile(pkg, PkgFileName)
 			if err != nil {
 				return err
 			}
@@ -471,7 +471,7 @@ var InitCommand = cli.Command{
 		}
 
 		log.Log("initializing package %s...", pkgname)
-		err := pm.InitPkg(cwd, pkgname, lang, func(p *gx.Package) {
+		err := pm.InitPkg(cwd, pkgname, lang, func(p *dms3gx.Package) {
 			p.Bugs.Url = promptUser("where should users go to report issues?")
 		})
 
@@ -492,13 +492,13 @@ var UpdateCommand = cli.Command{
 EXAMPLE:
    Update 'myPkg' to a given version (referencing it by package name):
 
-   $ gx update myPkg QmPZ6gM12JxshKzwSyrhbEmyrsi7UaMrnoQZL6mdrzSfh1
+   $ dms3gx update myPkg QmPZ6gM12JxshKzwSyrhbEmyrsi7UaMrnoQZL6mdrzSfh1
 
    or reference it by hash:
 
    $ export OLDHASH=QmdTTcAwxWhHLruoZtowxuqua1e5GVkYzxziiYPDn4vWJb
    $ export NEWHASH=QmPZ6gM12JxshKzwSyrhbEmyrsi7UaMrnoQZL6mdrzSfh1
-   $ gx update $OLDHASH $NEWHASH
+   $ dms3gx update $OLDHASH $NEWHASH
 `,
 	Flags: []cli.Flag{
 		cli.BoolTFlag{
@@ -543,7 +543,7 @@ EXAMPLE:
 			global = false
 		}
 
-		ipath, err := gx.InstallPath(pkg.Language, cwd, global)
+		ipath, err := dms3gx.InstallPath(pkg.Language, cwd, global)
 		if err != nil {
 			return err
 		}
@@ -577,7 +577,7 @@ continue?`, olddep.Name, olddep.Hash, npkg.Name, trgthash)
 		}
 
 		log.VLog("running pre update hook...")
-		err = gx.TryRunHook("pre-update", pkg.Language, pkg.SubtoolRequired, existing)
+		err = dms3gx.TryRunHook("pre-update", pkg.Language, pkg.SubtoolRequired, existing)
 		if err != nil {
 			return err
 		}
@@ -599,13 +599,13 @@ continue?`, olddep.Name, olddep.Hash, npkg.Name, trgthash)
 		olddep.Hash = trgthash
 		olddep.Version = npkg.Version
 
-		err = gx.SavePackageFile(pkg, PkgFileName)
+		err = dms3gx.SavePackageFile(pkg, PkgFileName)
 		if err != nil {
 			return fmt.Errorf("writing package file: %s", err)
 		}
 
 		log.VLog("running post update hook...")
-		err = gx.TryRunHook("post-update", pkg.Language, pkg.SubtoolRequired, oldhash, trgthash)
+		err = dms3gx.TryRunHook("post-update", pkg.Language, pkg.SubtoolRequired, oldhash, trgthash)
 		if err != nil {
 			return err
 		}
@@ -616,8 +616,8 @@ continue?`, olddep.Name, olddep.Hash, npkg.Name, trgthash)
 	},
 }
 
-func updateCollisionCheck(ipkg *gx.Package, idep *gx.Dependency, trgt string, chain []string, skip map[string]struct{}) error {
-	return ipkg.ForEachDep(func(dep *gx.Dependency, pkg *gx.Package) error {
+func updateCollisionCheck(ipkg *dms3gx.Package, idep *dms3gx.Dependency, trgt string, chain []string, skip map[string]struct{}) error {
+	return ipkg.ForEachDep(func(dep *dms3gx.Dependency, pkg *dms3gx.Package) error {
 		if _, ok := skip[dep.Hash]; ok {
 			return nil
 		}
@@ -651,16 +651,16 @@ var VersionCommand = cli.Command{
 
 EXAMPLE:
 
-   > gx version
+   > dms3gx version
    0.4.0
 
-   > gx version patch
+   > dms3gx version patch
    updated version to 0.4.1
 
-   > gx version major
+   > dms3gx version major
    updated version to 1.0.0
 
-   > gx version 2.5.7
+   > dms3gx version 2.5.7
    updated version to 2.5.7
 `,
 	Action: func(c *cli.Context) (outerr error) {
@@ -677,13 +677,13 @@ EXAMPLE:
 	},
 }
 
-func updateVersion(pkg *gx.Package, nver string) (outerr error) {
+func updateVersion(pkg *dms3gx.Package, nver string) (outerr error) {
 	if nver == "" {
 		return fmt.Errorf("must specify version with non-zero length")
 	}
 
 	defer func() {
-		err := gx.SavePackageFile(pkg, PkgFileName)
+		err := dms3gx.SavePackageFile(pkg, PkgFileName)
 		if err != nil {
 			outerr = err
 		}
@@ -738,23 +738,23 @@ var ViewCommand = cli.Command{
    of this package, or a dependency specified either by name or hash.
 
 EXAMPLE:
-   > gx view language
+   > dms3gx view language
    go
 
-   > gx view .
+   > dms3gx view .
    {
      "language": "go",
-     "name": "gx",
+     "name": "dms3gx",
      "version": "0.2.0
    }
 
-   > gx view go-libp2p gx.dvcsimport
-   "github.com/ipfs/go-libp2p"
+   > dms3gx view go-p2p dms3gx.dvcsimport
+   "github.com/dms3-p2p/go-p2p"
 
-   > gx view '.gxDependencies[0].name'
+   > dms3gx view '.dms3gxDependencies[0].name'
    go-multihash
 
-   > gx view '.gxDependencies[.name=go-multiaddr].hash'
+   > dms3gx view '.dms3gxDependencies[.name=go-multiaddr].hash'
    QmWLfU4tstw2aNcTykDm44xbSTCYJ9pUJwfhQCKGwckcHx
 `,
 	Action: func(c *cli.Context) error {
@@ -764,7 +764,7 @@ EXAMPLE:
 
 		var cfg map[string]interface{}
 		if len(c.Args()) == 2 {
-			pkg, err := LoadPackageFile(gx.PkgFileName)
+			pkg, err := LoadPackageFile(dms3gx.PkgFileName)
 			if err != nil {
 				return err
 			}
@@ -774,17 +774,17 @@ EXAMPLE:
 			if dep == nil {
 				return fmt.Errorf("no dep referenced by %s", ref)
 			}
-			err = gx.LoadPackage(&cfg, pkg.Language, dep.Hash)
+			err = dms3gx.LoadPackage(&cfg, pkg.Language, dep.Hash)
 			if err != nil {
 				return err
 			}
 		} else {
-			root, err := gx.GetPackageRoot()
+			root, err := dms3gx.GetPackageRoot()
 			if err != nil {
 				return err
 			}
 
-			err = gx.LoadPackageFile(&cfg, filepath.Join(root, PkgFileName))
+			err = dms3gx.LoadPackageFile(&cfg, filepath.Join(root, PkgFileName))
 			if err != nil {
 				return err
 			}
@@ -825,7 +825,7 @@ var depCheckCommand = cli.Command{
 var CleanCommand = cli.Command{
 	Name:  "clean",
 	Usage: "cleanup unused packages in vendor directory",
-	Description: `deletes any package in the 'vendor/gx' directory
+	Description: `deletes any package in the 'vendor/dms3gx' directory
    that is not a dependency of this package.
 
    use '--dry-run' to print packages that would be deleted without actually
@@ -850,12 +850,12 @@ var CleanCommand = cli.Command{
 			return err
 		}
 
-		ipath, err := gx.InstallPath(pkg.Language, cwd, false)
+		ipath, err := dms3gx.InstallPath(pkg.Language, cwd, false)
 		if err != nil {
 			return err
 		}
 
-		vdir := filepath.Join(ipath, "gx", "ipfs")
+		vdir := filepath.Join(ipath, "dms3gx", "dms3fs")
 		dirinfos, err := ioutil.ReadDir(vdir)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -972,8 +972,8 @@ var DepsCommand = cli.Command{
 		w := tabwriter.NewWriter(buf, 12, 4, 1, ' ', 0)
 		for _, d := range deps {
 			if !quiet {
-				var dpkg gx.Package
-				err := gx.LoadPackage(&dpkg, pkg.Language, d)
+				var dpkg dms3gx.Package
+				err := dms3gx.LoadPackage(&dpkg, pkg.Language, d)
 				if err != nil {
 					if os.IsNotExist(err) {
 						return fmt.Errorf("package %s not found", d)
@@ -1069,7 +1069,7 @@ var depStatsCommand = cli.Command{
 			return err
 		}
 
-		ds, err := gx.GetDepStats(pkg)
+		ds, err := dms3gx.GetDepStats(pkg)
 		if err != nil {
 			return err
 		}
@@ -1101,11 +1101,11 @@ var depBundleCommand = cli.Command{
 	},
 }
 
-func depBundleForPkg(pkg *gx.Package) (string, error) {
+func depBundleForPkg(pkg *dms3gx.Package) (string, error) {
 	return depBundleForPkgRec(pkg, make(map[string]bool))
 }
 
-func depBundleForPkgRec(pkg *gx.Package, done map[string]bool) (string, error) {
+func depBundleForPkgRec(pkg *dms3gx.Package, done map[string]bool) (string, error) {
 	obj, err := pm.Shell().NewObject("unixfs-dir")
 	if err != nil {
 		return "", err
@@ -1122,8 +1122,8 @@ func depBundleForPkgRec(pkg *gx.Package, done map[string]bool) (string, error) {
 			return "", err
 		}
 
-		var cpkg gx.Package
-		err = gx.LoadPackage(&cpkg, pkg.Language, dep.Hash)
+		var cpkg dms3gx.Package
+		err = dms3gx.LoadPackage(&cpkg, pkg.Language, dep.Hash)
 		if err != nil {
 			return "", err
 		}
@@ -1148,11 +1148,11 @@ func depBundleForPkgRec(pkg *gx.Package, done map[string]bool) (string, error) {
 
 var DiffCommand = cli.Command{
 	Name:        "diff",
-	Usage:       "gx diff <old> <new>",
-	Description: "gx diff prints the changes between two given packages",
+	Usage:       "dms3gx diff <old> <new>",
+	Description: "dms3gx diff prints the changes between two given packages",
 	Action: func(c *cli.Context) error {
 		if len(c.Args()) != 2 {
-			return fmt.Errorf("gx diff takes two arguments")
+			return fmt.Errorf("dms3gx diff takes two arguments")
 		}
 		a := c.Args()[0]
 		b := c.Args()[1]
@@ -1173,7 +1173,7 @@ var SetCommand = cli.Command{
 	Usage: "set package information",
 	Description: `set can be used to change package information.
 EXAMPLE:
-   > gx set license MIT
+   > dms3gx set license MIT
 `,
 	Flags: []cli.Flag{
 		cli.BoolFlag{
@@ -1187,7 +1187,7 @@ EXAMPLE:
 		}
 
 		var cfg map[string]interface{}
-		err := gx.LoadPackageFile(&cfg, PkgFileName)
+		err := dms3gx.LoadPackageFile(&cfg, PkgFileName)
 		if err != nil {
 			return err
 		}
@@ -1207,7 +1207,7 @@ EXAMPLE:
 			return err
 		}
 
-		return gx.SavePackageFile(cfg, PkgFileName)
+		return dms3gx.SavePackageFile(cfg, PkgFileName)
 	},
 }
 
@@ -1221,7 +1221,7 @@ var ReleaseCommand = cli.Command{
 		}
 
 		if !pm.ShellOnline() {
-			return fmt.Errorf("ipfs daemon isn't running")
+			return fmt.Errorf("dms3fs daemon isn't running")
 		}
 
 		pkg, err := LoadPackageFile(PkgFileName)
@@ -1255,7 +1255,7 @@ var TestCommand = cli.Command{
 			return err
 		}
 
-		err = gx.TryRunHook("pre-test", pkg.Language, pkg.SubtoolRequired)
+		err = dms3gx.TryRunHook("pre-test", pkg.Language, pkg.SubtoolRequired)
 		if err != nil {
 			return err
 		}
@@ -1264,10 +1264,10 @@ var TestCommand = cli.Command{
 		if pkg.Test != "" {
 			testErr = fmt.Errorf("don't support running custom test script yet, bug whyrusleeping")
 		} else {
-			testErr = gx.TryRunHook("test", pkg.Language, pkg.SubtoolRequired, c.Args()...)
+			testErr = dms3gx.TryRunHook("test", pkg.Language, pkg.SubtoolRequired, c.Args()...)
 		}
 
-		err = gx.TryRunHook("post-test", pkg.Language, pkg.SubtoolRequired)
+		err = dms3gx.TryRunHook("post-test", pkg.Language, pkg.SubtoolRequired)
 		if err != nil {
 			return err
 		}
@@ -1313,13 +1313,13 @@ func splitArgs(in string) []string {
 	return out
 }
 
-func escapeReleaseCmd(pkg *gx.Package, cmd string) string {
+func escapeReleaseCmd(pkg *dms3gx.Package, cmd string) string {
 	cmd = strings.Replace(cmd, "$VERSION", pkg.Version, -1)
 
 	return cmd
 }
 
-func runRelease(pkg *gx.Package) error {
+func runRelease(pkg *dms3gx.Package) error {
 	if pkg.ReleaseCmd == "" {
 		return nil
 	}

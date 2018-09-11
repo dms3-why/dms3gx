@@ -13,13 +13,13 @@ import (
 	"strings"
 	"time"
 
-	sh "github.com/ipfs/go-ipfs-api"
-	mh "github.com/multiformats/go-multihash"
+	sh "github.com/dms3-fs/go-fs-api"
+	mh "github.com/dms3-mft/go-multihash"
 	prog "github.com/whyrusleeping/progmeter"
 	. "github.com/whyrusleeping/stump"
 )
 
-const GxVersion = "0.12.1"
+const Dms3GxVersion = "0.12.1"
 
 const PkgFileName = "package.json"
 
@@ -35,7 +35,7 @@ func init() {
 }
 
 type PM struct {
-	ipfssh *sh.Shell
+	dms3fssh *sh.Shell
 
 	cfg *Config
 
@@ -43,7 +43,7 @@ type PM struct {
 
 	global bool
 
-	// hash of the 'empty' ipfs dir to avoid extra calls to object new
+	// hash of the 'empty' dms3fs dir to avoid extra calls to object new
 	blankDir string
 }
 
@@ -51,7 +51,7 @@ func NewPM(cfg *Config) (*PM, error) {
 	sh := NewShell()
 	sh.SetTimeout(time.Minute * 8)
 	return &PM{
-		ipfssh: sh,
+		dms3fssh: sh,
 		cfg:    cfg,
 	}, nil
 }
@@ -78,12 +78,12 @@ func GetPackageRoot() (string, error) {
 }
 
 func (pm *PM) Shell() *sh.Shell {
-	if pm.ipfssh == nil {
-		pm.ipfssh = NewShell()
-		pm.ipfssh.SetTimeout(time.Minute * 8)
+	if pm.dms3fssh == nil {
+		pm.dms3fssh = NewShell()
+		pm.dms3fssh.SetTimeout(time.Minute * 8)
 	}
 
-	return pm.ipfssh
+	return pm.dms3fssh
 }
 
 func (pm *PM) ShellOnline() bool {
@@ -120,7 +120,7 @@ func maybeRunPostInstall(pkg *Package, pkgdir string, global bool) error {
 
 func (pm *PM) InstallPackage(hash, ipath string) (*Package, error) {
 	// if its already local, skip it
-	pkgdir := filepath.Join(ipath, "gx", "ipfs", hash)
+	pkgdir := filepath.Join(ipath, "dms3gx", "dms3fs", hash)
 	cpkg := new(Package)
 	err := FindPackageInDir(cpkg, pkgdir)
 	if err != nil {
@@ -162,19 +162,19 @@ func padRight(s string, w int) string {
 }
 
 func pkgRanHook(dir, hook string) bool {
-	p := filepath.Join(dir, ".gx", hook)
+	p := filepath.Join(dir, ".dms3-gx", hook)
 	_, err := os.Stat(p)
 	return err == nil
 }
 
 func writePkgHook(dir, hook string) error {
-	gxdir := filepath.Join(dir, ".gx")
-	err := os.MkdirAll(gxdir, 0755)
+	dms3gxdir := filepath.Join(dir, ".dms3-gx")
+	err := os.MkdirAll(dms3gxdir, 0755)
 	if err != nil {
 		return err
 	}
 
-	fipath := filepath.Join(gxdir, hook)
+	fipath := filepath.Join(dms3gxdir, hook)
 	fi, err := os.Create(fipath)
 	if err != nil {
 		return err
@@ -206,8 +206,8 @@ func (pm *PM) InitPkg(dir, name, lang string, setup func(*Package)) error {
 			Author:     username,
 			Language:   lang,
 			Version:    "0.0.0",
-			GxVersion:  GxVersion,
-			ReleaseCmd: "git commit -a -m \"gx publish $VERSION\"",
+			Dms3GxVersion:  Dms3GxVersion,
+			ReleaseCmd: "git commit -a -m \"dms3gx publish $VERSION\"",
 		},
 	}
 
@@ -244,7 +244,7 @@ func CheckForHelperTools(lang string) {
 // ImportPackage downloads the package specified by dephash into the package
 // in the directory 'dir'
 func (pm *PM) ImportPackage(dir, dephash string) (*Dependency, error) {
-	pkgpath := filepath.Join(dir, "gx", "ipfs", dephash)
+	pkgpath := filepath.Join(dir, "dms3gx", "dms3fs", dephash)
 	// check if its already imported
 	_, err := os.Stat(pkgpath)
 	if err == nil {
@@ -311,7 +311,7 @@ func githubRawPath(repo string) string {
 }
 
 func (pm *PM) resolveGithubDep(name string) (string, error) {
-	resp, err := http.Get("https://" + githubRawPath(name) + "/.gx/lastpubver")
+	resp, err := http.Get("https://" + githubRawPath(name) + "/.dms3-gx/lastpubver")
 	if err != nil {
 		return "", err
 	}
@@ -326,12 +326,12 @@ func (pm *PM) resolveGithubDep(name string) (string, error) {
 
 		parts := strings.Split(string(out), ": ")
 		if len(parts) < 2 {
-			return "", fmt.Errorf("unrecognized format on .gx/lastpubver")
+			return "", fmt.Errorf("unrecognized format on .dms3-gx/lastpubver")
 		}
 		VLog("  - resolved %q to %s, version %s", name, parts[1], parts[0])
 		return strings.TrimSpace(parts[1]), nil
 	case 404:
-		return "", fmt.Errorf("no gx package found at %s", name)
+		return "", fmt.Errorf("no dms3gx package found at %s", name)
 	default:
 		return "", fmt.Errorf("unrecognized http response from github: %d: %s", resp.StatusCode, resp.Status)
 	}
@@ -494,7 +494,7 @@ func LoadPackage(out interface{}, env, hash string) error {
 		return err
 	}
 
-	p := filepath.Join(ipath, "gx", "ipfs", hash)
+	p := filepath.Join(ipath, "dms3gx", "dms3fs", hash)
 	err = FindPackageInDir(out, p)
 	if err == nil {
 		return nil
@@ -505,7 +505,7 @@ func LoadPackage(out interface{}, env, hash string) error {
 		return err
 	}
 
-	p = filepath.Join(ipath, "gx", "ipfs", hash)
+	p = filepath.Join(ipath, "dms3gx", "dms3fs", hash)
 	return FindPackageInDir(out, p)
 }
 
@@ -558,7 +558,7 @@ func getSubtoolPath(env string) (string, error) {
 		return "", nil
 	}
 
-	binname := "gx-" + env + binarySuffix
+	binname := "dms3gx-" + env + binarySuffix
 	_, err := exec.LookPath(binname)
 	if err != nil {
 		if eErr, ok := err.(*exec.Error); ok {
@@ -574,7 +574,7 @@ func getSubtoolPath(env string) (string, error) {
 			nearBin := filepath.Join(dir, fileNoExe+"-"+env+binarySuffix)
 
 			if _, err := os.Stat(nearBin); err != nil {
-				VLog("subtool_exec: No gx helper tool found for", env)
+				VLog("subtool_exec: No dms3gx helper tool found for", env)
 				return "", nil
 			}
 			binname = nearBin
@@ -594,7 +594,7 @@ func TryRunHook(hook, env string, req bool, args ...string) error {
 
 	if binname == "" {
 		if req {
-			return fmt.Errorf("no binary named gx-%s was found.", env)
+			return fmt.Errorf("no binary named dms3gx-%s was found.", env)
 		}
 		return nil
 	}
@@ -804,7 +804,7 @@ func (pm *PM) fetchDependencies(pkg *Package, location string) error {
 			// it either returns it or returns an error.
 			go func(dep *Dependency) {
 
-				pkgDir := filepath.Join(location, "gx", "ipfs", dep.Hash)
+				pkgDir := filepath.Join(location, "dms3gx", "dms3fs", dep.Hash)
 				// TODO: Encapsulate in a function. Used in too many places
 				// and is part of the standard.
 
@@ -865,7 +865,7 @@ func (pm *PM) fetchDependencies(pkg *Package, location string) error {
 //
 // TODO: This function could also use the same parallel goroutine processing
 // structure of `fetchDependencies` but right now the `post-install` hook
-// of the only sub-tool (`gx-go rewrite`) already does a parallel processing
+// of the only sub-tool (`dms3gx-go rewrite`) already does a parallel processing
 // of its own, so there's little to gain here.
 func (pm *PM) dependenciesPostInstall(pkg *Package, location string) error {
 	depQueue := NewDependencyQueue(len(pkg.Dependencies) * 2)
@@ -881,7 +881,7 @@ func (pm *PM) dependenciesPostInstall(pkg *Package, location string) error {
 		}
 
 		hash := dep.Hash
-		pkgdir := filepath.Join(location, "gx", "ipfs", hash)
+		pkgdir := filepath.Join(location, "dms3gx", "dms3fs", hash)
 		// TODO: Encapsulate in a function.
 
 		pkg := new(Package)

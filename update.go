@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	gx "github.com/whyrusleeping/gx/gxutil"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 	log "github.com/whyrusleeping/stump"
 )
 
-func RecursiveDepUpdate(pkg *gx.Package, from, to string) error {
+func RecursiveDepUpdate(pkg *dms3gx.Package, from, to string) error {
 	log.Log("recursively updating %s to %s", from, to)
 	todo := map[string]string{
 		from: to,
@@ -25,10 +25,10 @@ func RecursiveDepUpdate(pkg *gx.Package, from, to string) error {
 	return err
 }
 
-func cascadingUpdate(cur *gx.Package, dir string, updates map[string]string, checked map[string]bool) (bool, error) {
+func cascadingUpdate(cur *dms3gx.Package, dir string, updates map[string]string, checked map[string]bool) (bool, error) {
 	log.Log("cascading update of package %s in %s", cur.Name, dir)
 	var changed bool
-	err := cur.ForEachDep(func(dep *gx.Dependency, child *gx.Package) error {
+	err := cur.ForEachDep(func(dep *dms3gx.Dependency, child *dms3gx.Package) error {
 		if checked[dep.Hash] {
 			return nil
 		}
@@ -66,7 +66,7 @@ func cascadingUpdate(cur *gx.Package, dir string, updates map[string]string, che
 
 func fetchAndUpdate(tofetch string, updates map[string]string, checked map[string]bool) (string, error) {
 	log.Log("fetch and update: %s", tofetch)
-	dir, err := ioutil.TempDir("", "gx-update")
+	dir, err := ioutil.TempDir("", "dms3-gx-update")
 	if err != nil {
 		return "", err
 	}
@@ -84,7 +84,7 @@ func fetchAndUpdate(tofetch string, updates map[string]string, checked map[strin
 	}
 
 	if changed {
-		err := gx.SavePackageFile(pkg, filepath.Join(dir, pkg.Name, gx.PkgFileName))
+		err := dms3gx.SavePackageFile(pkg, filepath.Join(dir, pkg.Name, dms3gx.PkgFileName))
 		if err != nil {
 			return "", err
 		}

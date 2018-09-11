@@ -6,9 +6,9 @@ branch=${2:-master}
 echo "fetching $remote"
 git fetch "$remote"
 
-for h in $(git log "$remote/$branch" --format=format:'%H' .gx/lastpubver); do
-    # get the gx version at this point
-    ver="$(git show $h:.gx/lastpubver 2>/dev/null | cut -d: -f1)" || continue
+for h in $(git log "$remote/$branch" --format=format:'%H' .dms3-gx/lastpubver); do
+    # get the dms3-gx version at this point
+    ver="$(git show $h:.dms3-gx/lastpubver 2>/dev/null | cut -d: -f1)" || continue
 
     # Skip empty versions
     [[ -n "$ver" ]] || continue

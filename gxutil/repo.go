@@ -12,7 +12,7 @@ import (
 )
 
 func (pm *PM) FetchRepo(rpath string, usecache bool) (map[string]string, error) {
-	if strings.HasPrefix(rpath, "/ipns/") {
+	if strings.HasPrefix(rpath, "/dms3ns/") {
 		p, err := pm.ResolveRepoName(rpath, usecache)
 		if err != nil {
 			return nil, err
@@ -35,7 +35,7 @@ func (pm *PM) FetchRepo(rpath string, usecache bool) (map[string]string, error) 
 
 var ErrNotFound = errors.New("cache miss")
 
-// TODO: once on ipfs 0.4.0, use the files api
+// TODO: once on dms3fs 0.4.0, use the files api
 func (pm *PM) ResolveRepoName(name string, usecache bool) (string, error) {
 	if usecache {
 		cache, ok, err := CheckCacheFile(name)
@@ -67,7 +67,7 @@ func CheckCacheFile(name string) (string, bool, error) {
 	if err != nil {
 		return "", false, err
 	}
-	p := filepath.Join(home, ".gxcache")
+	p := filepath.Join(home, ".dms3-gxcache")
 
 	fi, err := os.Open(p)
 	if err != nil {
@@ -90,13 +90,13 @@ func CheckCacheFile(name string) (string, bool, error) {
 	return "", false, nil
 }
 
-// TODO: think about moving gx global files into a .config/local type thing
+// TODO: think about moving dms3gx global files into a .config/local type thing
 func (pm *PM) cacheSet(name, resolved string) error {
 	home, err := hd.Dir()
 	if err != nil {
 		return err
 	}
-	p := filepath.Join(home, ".gxcache")
+	p := filepath.Join(home, ".dms3-gxcache")
 
 	_, err = os.Stat(p)
 	if err != nil {

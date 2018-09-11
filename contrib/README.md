@@ -2,7 +2,7 @@
 
 ## gx-retrotag
 
-`gx-retrotag` retroactively adds git tags to commits that modify .gx/lastpubver
+`gx-retrotag` retroactively adds git tags to commits that modify .dms3-gx/lastpubver
 (gx release commits).
 
 1. Fetches $remote (defaults to origin).

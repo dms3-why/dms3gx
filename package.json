@@ -1,11 +1,10 @@
 {
   "bugs": {
-    "url": "https://github.com/whyrusleeping/gx/issues"
+    "url": "https://github.com/dms3-why/dms3gx/issues"
   },
-  "gxVersion": "0.11.0",
+  "dms3gxVersion": "0.11.0",
   "language": "go",
   "license": "MIT",
-  "name": "gx",
+  "name": "dms3gx",
   "version": "0.12.1"
 }
-

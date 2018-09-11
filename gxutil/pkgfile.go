@@ -16,7 +16,7 @@ type PackageBase struct {
 	Description     string        `json:"description,omitempty"`
 	Keywords        []string      `json:"keywords,omitempty"`
 	Version         string        `json:"version,omitempty"`
-	Dependencies    []*Dependency `json:"gxDependencies,omitempty"`
+	Dependencies    []*Dependency `json:"dms3gxDependencies,omitempty"`
 	Bin             string        `json:"bin,omitempty"`
 	Build           string        `json:"build,omitempty"`
 	Test            string        `json:"test,omitempty"`
@@ -25,7 +25,7 @@ type PackageBase struct {
 	Language        string        `json:"language,omitempty"`
 	License         string        `json:"license"`
 	Bugs            BugsObj       `json:"bugs"`
-	GxVersion       string        `json:"gxVersion"`
+	Dms3GxVersion       string        `json:"dms3gxVersion"`
 }
 
 type BugsObj struct {
@@ -35,7 +35,7 @@ type BugsObj struct {
 type Package struct {
 	PackageBase
 
-	Gx json.RawMessage `json:"gx,omitempty"`
+	Dms3Gx json.RawMessage `json:"dms3gx,omitempty"`
 }
 
 // Dependency represents a dependency of a package

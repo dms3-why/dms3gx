@@ -42,7 +42,7 @@ func (pm *PM) PublishPackage(dir string, pkg *PackageBase) (string, error) {
 		}
 	}
 
-	gxig, err := gi.CompileIgnoreFile(filepath.Join(dir, ".gxignore"))
+	dms3gxig, err := gi.CompileIgnoreFile(filepath.Join(dir, ".dms3-gxignore"))
 	if err != nil && !os.IsNotExist(err) {
 		return "", err
 	}
@@ -74,8 +74,8 @@ func (pm *PM) PublishPackage(dir string, pkg *PackageBase) (string, error) {
 			return nil
 		}
 
-		// respect gxignore
-		if gxig != nil && gxig.MatchesPath(rel) {
+		// respect dms3gxignore
+		if dms3gxig != nil && dms3gxig.MatchesPath(rel) {
 			return nil
 		}
 
@@ -86,6 +86,11 @@ func (pm *PM) PublishPackage(dir string, pkg *PackageBase) (string, error) {
 
 		// dont publish gx repo files
 		if strings.HasPrefix(rel, ".gx/") || strings.HasSuffix(rel, ".gxrc") {
+			return nil
+		}
+
+		// dont publish dms3gx repo files
+		if strings.HasPrefix(rel, ".dms3-gx/") || strings.HasSuffix(rel, ".dms3-gxrc") {
 			return nil
 		}
 

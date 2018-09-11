@@ -55,7 +55,7 @@ func (pm *PM) GetPackageTo(hash, out string) (*Package, error) {
 	}
 
 	begin := time.Now()
-	stump.VLog("  - fetching %s via ipfs api", hash)
+	stump.VLog("  - fetching %s via dms3fs api", hash)
 	tries := 3
 	for i := 0; i < tries; i++ {
 		if err := pm.Shell().Get(hash, outtemp); err != nil {

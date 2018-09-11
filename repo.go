@@ -9,7 +9,7 @@ import (
 
 	hd "github.com/mitchellh/go-homedir"
 	cli "github.com/urfave/cli"
-	gx "github.com/whyrusleeping/gx/gxutil"
+	dms3gx "github.com/dms3-why/dms3gx/gxutil"
 	. "github.com/whyrusleeping/stump"
 )
 
@@ -17,16 +17,16 @@ func cfgPath(global bool) (string, error) {
 	if global {
 		home, err := hd.Dir()
 		if err != nil {
-			return "", fmt.Errorf("$HOME not set, cannot find global .gxrc")
+			return "", fmt.Errorf("$HOME not set, cannot find global .dms3-gxrc")
 		}
-		return filepath.Join(home, gx.CfgFileName), nil
+		return filepath.Join(home, dms3gx.CfgFileName), nil
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cwd, gx.CfgFileName), nil
+	return filepath.Join(cwd, dms3gx.CfgFileName), nil
 }
 
 var RepoCommand = cli.Command{
@@ -57,7 +57,7 @@ var RepoAddCommand = cli.Command{
 			return err
 		}
 
-		cfg, err := gx.LoadConfigFrom(cfp)
+		cfg, err := dms3gx.LoadConfigFrom(cfp)
 		if err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ var RepoAddCommand = cli.Command{
 			cfg.ExtraRepos[name] = rpath
 		}
 
-		return gx.WriteConfig(cfg, cfp)
+		return dms3gx.WriteConfig(cfg, cfp)
 	},
 }
 
@@ -100,7 +100,7 @@ var RepoRmCommand = cli.Command{
 			return err
 		}
 
-		cfg, err := gx.LoadConfigFrom(cfp)
+		cfg, err := dms3gx.LoadConfigFrom(cfp)
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ var RepoRmCommand = cli.Command{
 			delete(cfg.ExtraRepos, name)
 		}
 
-		return gx.WriteConfig(cfg, cfp)
+		return dms3gx.WriteConfig(cfg, cfp)
 	},
 }
 
@@ -130,7 +130,7 @@ var RepoListCommand = cli.Command{
 	Name:  "list",
 	Usage: "list tracked repos or packages in a repo",
 	Action: func(c *cli.Context) error {
-		cfg, err := gx.LoadConfig()
+		cfg, err := dms3gx.LoadConfig()
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ var RepoUpdateCommand = cli.Command{
 	Name:  "update",
 	Usage: "update cached versions of repos",
 	Action: func(c *cli.Context) error {
-		cfg, err := gx.LoadConfig()
+		cfg, err := dms3gx.LoadConfig()
 		if err != nil {
 			return err
 		}
@@ -224,7 +224,7 @@ var RepoUpdateCommand = cli.Command{
 				return fmt.Errorf("unknown repo: %s", r)
 			}
 
-			val, ok, err := gx.CheckCacheFile(path)
+			val, ok, err := dms3gx.CheckCacheFile(path)
 			if err != nil {
 				return fmt.Errorf("checking cache: %s", err)
 			}

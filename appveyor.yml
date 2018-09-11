@@ -8,7 +8,7 @@ version: "{build}"
 
 os: Windows Server 2012 R2
 
-clone_folder: c:\go\src\github.com\whyrusleeping\gx
+clone_folder: c:\go\src\github.com\dms3-why\dms3gx
 
 environment:
   GOPATH: c:\gopath

@@ -1,4 +1,4 @@
-# Test framework for go-ipfs
+# Test framework for go-dms3fs
 #
 # Copyright (c) 2014 Christian Couder
 # MIT Licensed; see the LICENSE file in this repository.
@@ -20,19 +20,19 @@ SHARNESS_LIB="lib/sharness/sharness.sh"
 	exit 1
 }
 
-# add current directory to path, for ipfs tool.
+# add current directory to path, for dms3fs tool.
 # after loading sharness, so that ./bin takes precedence over ./.
 PATH="$cwd"/bin:${PATH}
 export PATH
 
-# assert the `ipfs` we're using is the right one.
-if test `which ipfs` != "$cwd/bin/ipfs"; then
-	echo >&2 "Found ipfs executable but it's not $cwd/bin/ipfs"
+# assert the `dms3fs` we're using is the right one.
+if test `which dms3fs` != "$cwd/bin/dms3fs"; then
+	echo >&2 "Found dms3fs executable but it's not $cwd/bin/dms3fs"
 	echo >&2 "Check PATH: $PATH"
 	exit 1
 fi
 
-# Please put go-ipfs specific shell functions below
+# Please put go-dms3fs specific shell functions below
 
 # grab + output options
 test "$TEST_NO_FUSE" != 1 && test_set_prereq FUSE
@@ -96,11 +96,11 @@ test_wait_open_tcp_port_10_sec() {
 
 
 # test_config_set helps us make sure _we really did set_ a config value.
-# it sets it and then tests it. This became elaborate because ipfs config
+# it sets it and then tests it. This became elaborate because dms3fs config
 # was setting really weird things and am not sure why.
 test_config_set() {
 
-	# grab flags (like --bool in "ipfs config --bool")
+	# grab flags (like --bool in "dms3fs config --bool")
 	test_cfg_flags="" # unset in case.
 	test "$#" = 3 && { test_cfg_flags=$1; shift; }
 
@@ -108,23 +108,23 @@ test_config_set() {
 	test_cfg_val=$2
 
 	# when verbose, tell the user what config values are being set
-	test_cfg_cmd="ipfs config $test_cfg_flags \"$test_cfg_key\" \"$test_cfg_val\""
+	test_cfg_cmd="dms3fs config $test_cfg_flags \"$test_cfg_key\" \"$test_cfg_val\""
 	test "$TEST_VERBOSE" = 1 && echo "$test_cfg_cmd"
 
 	# ok try setting the config key/val pair.
-	ipfs config $test_cfg_flags "$test_cfg_key" "$test_cfg_val"
+	dms3fs config $test_cfg_flags "$test_cfg_key" "$test_cfg_val"
 	echo "$test_cfg_val" >cfg_set_expected
-	ipfs config "$test_cfg_key" >cfg_set_actual
+	dms3fs config "$test_cfg_key" >cfg_set_actual
 	test_cmp cfg_set_expected cfg_set_actual
 }
 
-test_init_ipfs() {
+test_init_dms3fs() {
 
 	# we have a problem where initializing daemons with the same api port
 	# often fails-- it hangs indefinitely. The proper solution is to make
-	# ipfs pick an unused port for the api on startup, and then use that.
-	# Unfortunately, ipfs doesnt yet know how to do this-- the api port
-	# must be specified. Until ipfs learns how to do this, we must use
+	# dms3fs pick an unused port for the api on startup, and then use that.
+	# Unfortunately, dms3fs doesnt yet know how to do this-- the api port
+	# must be specified. Until dms3fs learns how to do this, we must use
 	# specific port numbers, which may still fail but less frequently
 	# if we at least use different ones.
 
@@ -148,25 +148,25 @@ test_init_ipfs() {
 	# the cli client knows to use it, so only need to set.
 	# todo: in the future, use env?
 
-	test_expect_success "ipfs init succeeds" '
-		export IPFS_PATH="$(pwd)/.ipfs" &&
-		ipfs init -b=1024 > /dev/null
+	test_expect_success "dms3fs init succeeds" '
+		export DMS3FS_PATH="$(pwd)/.dms3-fs" &&
+		dms3fs init -b=1024 > /dev/null
 	'
 
 	test_expect_success "prepare config -- mounting and bootstrap rm" '
-		mkdir mountdir ipfs ipns &&
-		test_config_set Mounts.IPFS "$(pwd)/ipfs" &&
-		test_config_set Mounts.IPNS "$(pwd)/ipns" &&
+		mkdir mountdir dms3fs dms3ns &&
+		test_config_set Mounts.DMS3FS "$(pwd)/dms3fs" &&
+		test_config_set Mounts.DMS3NS "$(pwd)/dms3ns" &&
 		test_config_set Addresses.API "$ADDR_API" &&
 		test_config_set Addresses.Gateway "$ADDR_GWAY" &&
 		test_config_set --json Addresses.Swarm "$ADDR_SWARM" &&
-		ipfs bootstrap rm --all ||
-		test_fsh cat "\"$IPFS_PATH/config\""
+		dms3fs bootstrap rm --all ||
+		test_fsh cat "\"$DMS3FS_PATH/config\""
 	'
 
 }
 
-test_config_ipfs_gateway_readonly() {
+test_config_dms3fs_gateway_readonly() {
 	ADDR_GWAY=$1
 	test_expect_success "prepare config -- gateway address" '
 		test "$ADDR_GWAY" != "" &&
@@ -176,66 +176,66 @@ test_config_ipfs_gateway_readonly() {
 	# tell the user what's going on if they messed up the call.
 	if test "$#" = 0; then
 		echo "#			Error: must call with an address, for example:"
-		echo '#			test_config_ipfs_gateway_readonly "/ip4/0.0.0.0/tcp/5002"'
+		echo '#			test_config_dms3fs_gateway_readonly "/ip4/0.0.0.0/tcp/5002"'
 		echo '#'
 	fi
 }
 
-test_config_ipfs_gateway_writable() {
+test_config_dms3fs_gateway_writable() {
 
-	test_config_ipfs_gateway_readonly $1
+	test_config_dms3fs_gateway_readonly $1
 
 	test_expect_success "prepare config -- gateway writable" '
 		test_config_set --bool Gateway.Writable true ||
-		test_fsh cat "\"$IPFS_PATH/config\""
+		test_fsh cat "\"$DMS3FS_PATH/config\""
 	'
 }
 
-test_launch_ipfs_daemon() {
+test_launch_dms3fs_daemon() {
 
 	args="$@"
 
-	test_expect_success "'ipfs daemon' succeeds" '
-		ipfs daemon $args >actual_daemon 2>daemon_err &
+	test_expect_success "'dms3fs daemon' succeeds" '
+		dms3fs daemon $args >actual_daemon 2>daemon_err &
 	'
 
 	# we say the daemon is ready when the API server is ready.
-	test_expect_success "'ipfs daemon' is ready" '
-		IPFS_PID=$! &&
+	test_expect_success "'dms3fs daemon' is ready" '
+		DMS3FS_PID=$! &&
 		pollEndpoint -ep=/version -host=$ADDR_API -v -tout=1s -tries=60 2>poll_apierr > poll_apiout ||
 		test_fsh cat actual_daemon || test_fsh cat daemon_err || test_fsh cat poll_apierr || test_fsh cat poll_apiout
 	'
 
 	if test "$ADDR_GWAY" != ""; then
-		test_expect_success "'ipfs daemon' output includes Gateway address" '
+		test_expect_success "'dms3fs daemon' output includes Gateway address" '
 			pollEndpoint -ep=/version -host=$ADDR_GWAY -v -tout=1s -tries=60 2>poll_gwerr > poll_gwout ||
 			test_fsh cat daemon_err || test_fsh cat poll_gwerr || test_fsh cat poll_gwout
 		'
 	fi
 }
 
-test_mount_ipfs() {
+test_mount_dms3fs() {
 
 	# make sure stuff is unmounted first.
-	test_expect_success FUSE "'ipfs mount' succeeds" '
-		umount "$(pwd)/ipfs" || true &&
-		umount "$(pwd)/ipns" || true &&
-		ipfs mount >actual
+	test_expect_success FUSE "'dms3fs mount' succeeds" '
+		umount "$(pwd)/dms3fs" || true &&
+		umount "$(pwd)/dms3ns" || true &&
+		dms3fs mount >actual
 	'
 
-	test_expect_success FUSE "'ipfs mount' output looks good" '
-		echo "IPFS mounted at: $(pwd)/ipfs" >expected &&
-		echo "IPNS mounted at: $(pwd)/ipns" >>expected &&
+	test_expect_success FUSE "'dms3fs mount' output looks good" '
+		echo "DMS3FS mounted at: $(pwd)/dms3fs" >expected &&
+		echo "DMS3NS mounted at: $(pwd)/dms3ns" >>expected &&
 		test_cmp expected actual
 	'
 
 }
 
-test_launch_ipfs_daemon_and_mount() {
+test_launch_dms3fs_daemon_and_mount() {
 
-	test_init_ipfs
-	test_launch_ipfs_daemon
-	test_mount_ipfs
+	test_init_dms3fs
+	test_launch_dms3fs_daemon
+	test_mount_dms3fs
 
 }
 
@@ -258,14 +258,14 @@ test_kill_repeat_10_sec() {
 	return 1
 }
 
-test_kill_ipfs_daemon() {
+test_kill_dms3fs_daemon() {
 
-	test_expect_success "'ipfs daemon' is still running" '
-		kill -0 $IPFS_PID
+	test_expect_success "'dms3fs daemon' is still running" '
+		kill -0 $DMS3FS_PID
 	'
 
-	test_expect_success "'ipfs daemon' can be killed" '
-		test_kill_repeat_10_sec $IPFS_PID
+	test_expect_success "'dms3fs daemon' can be killed" '
+		test_kill_repeat_10_sec $DMS3FS_PID
 	'
 }
 
@@ -358,14 +358,14 @@ make_package() {
 	dir=$1
 	lang=$2
 	mkdir -p $dir
-	test_expect_success "gx init succeeds" '
-		(cd $dir && gx init --lang="$lang")
+	test_expect_success "dms3gx init succeeds" '
+		(cd $dir && dms3gx init --lang="$lang")
 	'
 }
 
 publish_package() {
 	pkgdir=$1
-	(cd $pkgdir && gx publish) | awk '{ print $6 }'
+	(cd $pkgdir && dms3gx publish) | awk '{ print $6 }'
 }
 
 pkg_run() {
